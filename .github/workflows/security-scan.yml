@@ -11,7 +11,7 @@ on:
           - docker
           - source
       image:
-        description: "Docker image (for 'docker' target). By default ghcr.io/<owner>/<repo>:latest"
+        description: "Docker image (for 'docker' target). E.g. ghcr.io/Naresha/qubership-core-base-images:latest"
         required: false
         default: ""
       only-high-critical:
