@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=ghcr.io/netcracker/qubership-core-base:latest
+ARG BASE_IMAGE=ghcr.io/nareshamr/qubership-core-base:latest
 FROM ${BASE_IMAGE}
 ARG TARGETOS
 ARG TARGETARCH
@@ -62,12 +62,12 @@ RUN mkdir -p /tmp/cert && \
     find /app \( -type d -exec chmod ug+rwx {} \; -exec chown ${UID}:${GID} {} \; -o -type f -exec chmod ug+rw {} \; -exec chown ${UID}:${GID} {} \; \)
 
 # renovate: datasource=maven depName=qubership-profiler-installer packageName=org.qubership.profiler:qubership-profiler-installer versioning=maven
-ARG QUBERSHIP_PROFILER_VERSION=3.1.3
+ARG QUBERSHIP_PROFILER_VERSION=1.0.0
 ARG MAVEN_CENTRAL_URL=https://repo.maven.apache.org/maven2
 # Optional: override to pull from a custom repo (e.g. fork published to GitHub Packages). Same path layout as Maven Central: .../org/qubership/profiler/...
 ARG QUBERSHIP_PROFILER_MAVEN_REPO_URL=
 # Supported values: local, remote, github. Use github to pull from GitHub Releases (e.g. Nareshamr/qubership-profiler-agent).
-ARG QUBERSHIP_PROFILER_ARTIFACT_SOURCE=remote
+ARG QUBERSHIP_PROFILER_ARTIFACT_SOURCE=github
 # For artifact_source=github: GitHub repo in owner/repo form (e.g. Nareshamr/qubership-profiler-agent). Version is used as release tag.
 ARG QUBERSHIP_PROFILER_GITHUB_REPO=Nareshamr/qubership-profiler-agent
 
