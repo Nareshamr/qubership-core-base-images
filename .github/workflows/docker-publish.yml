@@ -43,5 +43,5 @@ jobs:
           context: ${{ matrix.image.context }}
           push: true
           tags: |
-            ghcr.io/Naresha/${{ matrix.image.name }}:${{ matrix.image.tag }}
-            ghcr.io/Naresha/${{ matrix.image.name }}:${{ github.ref_name }}
+            ghcr.io/nareshamr/${{ matrix.image.name }}:${{ matrix.image.tag }}
+            ghcr.io/nareshamr/${{ matrix.image.name }}:${{ github.ref_name }}
