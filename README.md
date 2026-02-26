@@ -135,14 +135,76 @@ FROM ghcr.io/netcracker/qubership-java-base-prof:25-alpine-latest
 
 ### Qubership Profiler Integration
 
-The Java Alpine images (Java 21 and Java 25 profiler variants) include built-in support for the Qubership profiler:
+The Java Alpine images (Java 21 and Java 25 profiler variants) include built-in support for the Qubership profiler. The agent is built from the [qubership-profiler-agent](https://github.com/Netcracker/qubership-profiler-agent) repository.
 
 - **Profiler Version**: 3.1.3 (configurable via build arg `QUBERSHIP_PROFILER_VERSION`)
-- **Artifact Source**: Configurable via build arg `QUBERSHIP_PROFILER_ARTIFACT_SOURCE` (local or remote from Maven Central)
+- **Where the default version is pulled from**: **Maven Central** (`https://repo.maven.apache.org/maven2`). The [Netcracker/qubership-profiler-agent](https://github.com/Netcracker/qubership-profiler-agent) project publishes releases (e.g. v3.1.3) to Maven Central via its release workflow, and the base images download `qubership-profiler-installer` and `qubership-profiler-diagtools` from there.
+- **Artifact Source**: Configurable via build arg `QUBERSHIP_PROFILER_ARTIFACT_SOURCE` (`local`, `remote`, or `github`)
+- **Custom Maven repo**: Optional build arg `QUBERSHIP_PROFILER_MAVEN_REPO_URL` overrides the remote URL when using a fork or private repo (same path layout as Maven Central: `.../org/qubership/profiler/...`).
+- **GitHub Releases**: Use `QUBERSHIP_PROFILER_ARTIFACT_SOURCE=github` with `QUBERSHIP_PROFILER_GITHUB_REPO` (e.g. `Nareshamr/qubership-profiler-agent`) to pull assets directly from a GitHub release tag.
 - **Enable Profiler**: Set environment variable `PROFILER_ENABLED=true`
 - **Profiler Directory**: `/app/diag`
 - **Dump Directory**: `/app/diag/dump`
 - **Multi-platform Support**: Automatically downloads platform-specific artifacts based on `TARGETOS` and `TARGETARCH` build args
+
+#### Using a profiler fork (e.g. Nareshamr/qubership-profiler-agent)
+
+To integrate a fork such as [Nareshamr/qubership-profiler-agent](https://github.com/Nareshamr/qubership-profiler-agent) instead of the upstream Netcracker release:
+
+**Option A – Local artifacts (no publish step)**
+
+1. Clone and build the fork (Java 17 required):  
+   `git clone https://github.com/Nareshamr/qubership-profiler-agent.git && cd qubership-profiler-agent && ./gradlew build`
+2. From the fork build output, copy into `qubership-core-base-images/local-artifacts/`:
+   - `qubership-profiler-installer-<VERSION>.zip` (from the `installer` module)
+   - `qubership-profiler-diagtools-<VERSION>-linux-amd64.tar.gz` and/or `...-linux-arm64.tar.gz` (from the `diagtools` module)
+3. Build the profiler image with local source and the same version:
+   ```bash
+   docker build -f images/java-21-prof/Dockerfile \
+     --build-arg QUBERSHIP_PROFILER_ARTIFACT_SOURCE=local \
+     --build-arg QUBERSHIP_PROFILER_VERSION=<VERSION> \
+     .
+   ```
+   Use `images/java-25-prof/Dockerfile` for Java 25. For multi-platform, ensure the diagtools tarballs for each `TARGETOS`/`TARGETARCH` are present and named as the Dockerfile expects.
+
+**Option B – Custom Maven repository**
+
+1. Publish the fork’s artifacts to a Maven-compatible repository (e.g. GitHub Packages or an internal repo) using the same group/artifact IDs and path layout as upstream (`org.qubership.profiler:qubership-profiler-installer`, `qubership-profiler-diagtools`).
+2. Build the profiler image with the custom repo URL and version:
+   ```bash
+   docker build -f images/java-21-prof/Dockerfile \
+     --build-arg QUBERSHIP_PROFILER_ARTIFACT_SOURCE=remote \
+     --build-arg QUBERSHIP_PROFILER_MAVEN_REPO_URL=https://your-repo-url/maven2 \
+     --build-arg QUBERSHIP_PROFILER_VERSION=<VERSION> \
+     .
+   ```
+   Omit `QUBERSHIP_PROFILER_MAVEN_REPO_URL` to keep using Maven Central (upstream).
+
+**Option C – GitHub Releases**
+
+To use a release from a fork (e.g. [Nareshamr/qubership-profiler-agent releases](https://github.com/Nareshamr/qubership-profiler-agent/releases)), the release must include these **exact asset names**:
+
+- `qubership-profiler-installer-<VERSION>.zip`
+- `qubership-profiler-diagtools-<VERSION>-linux-amd64.tar.gz` (and `qubership-profiler-diagtools-<VERSION>-linux-arm64.tar.gz` for arm64 builds)
+
+Then build with `artifact_source=github`, the repo, and the release tag (e.g. `1.0`):
+
+```bash
+docker build -f images/java-21-prof/Dockerfile \
+  --build-arg QUBERSHIP_PROFILER_ARTIFACT_SOURCE=github \
+  --build-arg QUBERSHIP_PROFILER_GITHUB_REPO=Nareshamr/qubership-profiler-agent \
+  --build-arg QUBERSHIP_PROFILER_VERSION=1.0 \
+  .
+```
+
+Use `images/java-25-prof/Dockerfile` for Java 25. The default `QUBERSHIP_PROFILER_GITHUB_REPO` is already `Nareshamr/qubership-profiler-agent`, so for your 1.0 release you can use:
+
+```bash
+docker build -f images/java-21-prof/Dockerfile \
+  --build-arg QUBERSHIP_PROFILER_ARTIFACT_SOURCE=github \
+  --build-arg QUBERSHIP_PROFILER_VERSION=1.0 \
+  .
+```
 
 ### Certificate Management
 
